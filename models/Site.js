@@ -16,6 +16,20 @@ const siteSchema = new mongoose.Schema({
             totalAmount: Number
         }
     ],
+    billingTotal: {
+        type: Number,
+        default: 0
+    },
+    withdrawals: [
+        {
+            date: { type: Date, default: Date.now },
+            amount: { type: Number, required: true }
+        }
+    ],
+    totalWithdrawal: {
+        type: Number,
+        default: 0
+    },
     grandTotal: {
         type: Number,
         default: 0
@@ -43,7 +57,8 @@ const siteSchema = new mongoose.Schema({
 });
 
 siteSchema.pre('save', async function () {
-    let grandTotal = 0;
+
+    let billingTotal = 0;
 
     // 1. Calculate Billing Items Totals
     if (this.billingItems && Array.isArray(this.billingItems)) {
@@ -55,12 +70,24 @@ siteSchema.pre('save', async function () {
             item.totalFoot = parseFloat((l * w).toFixed(2));
             item.totalAmount = parseFloat((item.totalFoot * r).toFixed(2));
 
-            grandTotal += item.totalAmount;
+            billingTotal += item.totalAmount;
         }
     }
-    this.grandTotal = parseFloat(grandTotal.toFixed(2));
+    this.billingTotal = parseFloat(billingTotal.toFixed(2));
 
-    // 2. Calculate Worker Payment Totals
+    // 2. Calculate Withdrawal Totals
+    let totalWithdrawal = 0;
+    if (this.withdrawals && Array.isArray(this.withdrawals)) {
+        for (let withdrawal of this.withdrawals) {
+            totalWithdrawal += withdrawal.amount || 0;
+        }
+    }
+    this.totalWithdrawal = parseFloat(totalWithdrawal.toFixed(2));
+
+    // 3. Calculate Grand Total (Gross Total)
+    this.grandTotal = parseFloat((this.billingTotal - this.totalWithdrawal).toFixed(2));
+
+    // 4. Calculate Worker Payment Totals
     if (this.workers && Array.isArray(this.workers)) {
         for (let worker of this.workers) {
             let workerTotal = 0;

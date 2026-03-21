@@ -17,7 +17,11 @@ const {
     getBillingItems,
     addBillingItem,
     updateBillingItem,
-    deleteBillingItem
+    deleteBillingItem,
+    getWithdrawals,
+    addWithdrawal,
+    updateWithdrawal,
+    deleteWithdrawal
 } = require('../controllers/siteController');
 
 // All site routes are protected
@@ -43,5 +47,11 @@ router.get('/:id/billing', getBillingItems);
 router.post('/:id/billing', addBillingItem);
 router.put('/:id/billing/:billingId', updateBillingItem);
 router.delete('/:id/billing/:billingId', deleteBillingItem);
+
+// Withdrawal specific routes
+router.get('/:id/withdrawals', getWithdrawals);
+router.post('/:id/withdrawals', addWithdrawal);
+router.put('/:id/withdrawals/:withdrawalId', updateWithdrawal);
+router.delete('/:id/withdrawals/:withdrawalId', deleteWithdrawal);
 
 module.exports = router;

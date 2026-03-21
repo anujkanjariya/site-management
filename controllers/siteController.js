@@ -315,3 +315,80 @@ exports.deleteBillingItem = async (req, res) => {
         res.status(400).json({ message: error.message });
     }
 };
+
+// Get all withdrawals for a site
+exports.getWithdrawals = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const site = await Site.findOne({ _id: id, user: req.user._id });
+        if (!site) {
+            return res.status(404).json({ message: 'Site not found or not authorized' });
+        }
+        res.status(200).json(site.withdrawals);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Add a new withdrawal to a site
+exports.addWithdrawal = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { amount, date } = req.body;
+
+        const site = await Site.findOne({ _id: id, user: req.user._id });
+        if (!site) {
+            return res.status(404).json({ message: 'Site not found or not authorized' });
+        }
+
+        site.withdrawals.push({ amount, date: date || Date.now() });
+        const updatedSite = await site.save();
+        res.status(201).json(updatedSite.withdrawals[updatedSite.withdrawals.length - 1]);
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+};
+
+// Update a withdrawal
+exports.updateWithdrawal = async (req, res) => {
+    try {
+        const { id, withdrawalId } = req.params;
+        const { amount, date } = req.body;
+
+        const site = await Site.findOne({ _id: id, user: req.user._id });
+        if (!site) {
+            return res.status(404).json({ message: 'Site not found or not authorized' });
+        }
+
+        const withdrawal = site.withdrawals.id(withdrawalId);
+        if (!withdrawal) {
+            return res.status(404).json({ message: 'Withdrawal record not found' });
+        }
+
+        if (amount !== undefined) withdrawal.amount = amount;
+        if (date !== undefined) withdrawal.date = date;
+
+        const updatedSite = await site.save();
+        res.status(200).json(withdrawal);
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+};
+
+// Delete a withdrawal
+exports.deleteWithdrawal = async (req, res) => {
+    try {
+        const { id, withdrawalId } = req.params;
+
+        const site = await Site.findOne({ _id: id, user: req.user._id });
+        if (!site) {
+            return res.status(404).json({ message: 'Site not found or not authorized' });
+        }
+
+        site.withdrawals.pull(withdrawalId);
+        await site.save();
+        res.status(200).json({ message: 'Withdrawal removed successfully' });
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+};
